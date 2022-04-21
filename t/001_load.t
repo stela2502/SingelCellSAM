@@ -9,4 +9,8 @@ BEGIN { use_ok( 'SingelCellSAM' ); }
 my $object = SingelCellSAM->new ();
 isa_ok ($object, 'SingelCellSAM');
 
+open ( IN , "samtools view t/data/ChrM_subset.bam |" );
 
+$object->splitSAM( 't/data/barcodes.tsv', 't/data/outpath', *IN );
+
+close ( IN );
