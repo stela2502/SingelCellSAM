@@ -101,25 +101,37 @@ sub changeReadGroup
     open ( my $out, ">".$opath."/".basename( $ifile ).".sam" ) or die $!;
     my ($s, $t, $line);
     while ( <$in> ){
-        if ( $_ =~ m/^@/ ){
-            print $out $_;
-            next;
-        }
-        $line = $_;
-        if ( $line =~m/$source:([\w-\d]*)/ ){
-            $s = $1;
-            if ( $line =~m/$target:([\w-_:\d]*)/ ){
-                $t = $1;
-                $line =~ s/$t/$s/;
-            }
-        }
-        print $out $line;
+        print $out $self->change( $_, $source, $target );
     }
     close ( $in );
     close ( $out );
     print "changed file: '$opath/".basename( $ifile ).".sam'\n";
     return $self;
 }
+
+sub change
+{
+
+    my ($self, $line, $source, $target) = @_;
+    $source = "CB:Z" unless ( defined $source);
+    $target = "RG:Z" unless ( defined $target);
+
+
+    my ($s, $t );
+    if ( $_ =~ m/^@/ ){
+        return ( $line );
+    }
+    if ( $line =~m/$source:([\w-\d]*)/ ){
+        $s = $1;
+        if ( $line =~m/$target:([\w-_:\d]*)/ ){
+            $t = $1;
+            $line =~ s/$t/$s/;
+        }
+    }
+    return ( $line );
+
+}
+
 
 =head2 splitSAM
 
@@ -142,33 +154,73 @@ sub splitSAM
         $stream = "STDIN"
     }
 
-    my($line, $cmd, $id, $tmp);
+    my($line, $cmd, $id, $tmp, $RGmissing, @lines, @bcs, $fn, $pat);
+    $pat = qr'@RG';
+    $RGmissing = 1;
     $id = 0;
     while ( <$stream> ) {
         $line = $_;
         #die "\n".$line."\n";
         print(".") if ($id++ % 1000 == 0);
-
+        ########################
+        ## fix the header lines:
+        ########################
         if ($line =~ m/^@/ ) {
             ## this needs to go into all the outfiles!
-            foreach my $fn (@{$barcodes->{'files'}} ){
-                print $fn $line;
+            ## read groups is a funny problem. Seams to be @RG elements in the read group, but they are not used as single cell id's
+            ## I want to check whether I could make use of them like that.
+            #die "reading this line:". $line;
+            if ( $line =~ m/^\@RG/ ){
+                ## This will be more complicated here - every sam file need to get the 'correct' entry
+                #print "\nmatched a \@RG\n";
+                if ( $RGmissing ){
+                $RGmissing = 0; # do that only once
+                for ( my $i = 0; $i < @{$barcodes->{'files'}}; $i++){
+                    #print ( $i ."\n");
+                    @bcs = @{@{$barcodes->{'barcodes4files'}}[$i]};
+                    @lines = (map { "\@RG\tID:$_\tSM:$_\n" } @bcs[1..(@bcs-1)] );
+                    $fn = @{$barcodes->{'files'}}[$i];
+                    print $fn join("", @lines);
+                    #if ( @lines == 1){
+                    #    close ( $fn );
+                    #    die @lines;
+                    #}
+                } 
+                #die "some problems with the headers - please inspect and fix!\n";
+                }
+            }else {
+                foreach my $fn (@{$barcodes->{'files'}} ){
+                    print $fn $line;
+                }
             }
+            
         }
-        # CB: Z: GACGCAACACGGTACT - 1
+        #########################
+        # fix the data lines
+        #########################
         elsif($line =~ m/CB:Z:([AGCTacgt]+-?\d*)/ ) {
             if (defined $barcodes->{'barcodes'}->{$1}) {
                 chomp($line);
-                #warn( "\nI would really like to print to this file: {".$barcodes->{'barcodes'}->{$1}."}");
-                $tmp = $barcodes->{'barcodes'}->{$1};#hope this is the filehandle I expect!
+                #################
+                # fix the RG entry
+                #################
+                $line = $self->change( $line, "CB:Z", "RG:Z" );
+                #################
+                # get the correct outfile & print
+                #################
+                $tmp = $barcodes->{'barcodes'}->{$1};
                 print $tmp $line."\n";
             }else {
                 warn ("barcode $1 is not defined\n".scalar( keys %{$barcodes->{'barcodes'}} ));
             }
+            #die $line."\n";
         }
-
+        #########################
     }
 
+    #############################
+    # recursion if there are too many cells!
+    #############################
     my @res = $barcodes->writeNewBarcodeFiles();
     DESTROY( $barcodes );
     foreach my $bcRes ( @res ) { ## only if there are multiple reads in one file.
@@ -180,6 +232,7 @@ sub splitSAM
         unlink( @$bcRes[0] );
         unlink( @$bcRes[1] );
     }
+    ###############################
 
     #print( "file stored in path '$opath'\n");
     return ($self);

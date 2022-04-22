@@ -32,4 +32,11 @@ my %WriteMakefileArgs = (
     })),
 );
 
+
+open( my $IN, "samtools --version |" ) or die "this perl library needs samtools to be installed\n$!\n";
+
+my @info = <$IN>;
+print ( "found dependency ". $info[0] );
+close ($IN);
+
 WriteMakefile(%WriteMakefileArgs);

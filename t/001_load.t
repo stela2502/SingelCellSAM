@@ -4,13 +4,19 @@
 
 use Test::More tests => 2;
 
+use File::Path;
+
 BEGIN { use_ok( 'SingelCellSAM' ); }
 
 my $object = SingelCellSAM->new ();
 isa_ok ($object, 'SingelCellSAM');
 
-open ( IN , "samtools view t/data/ChrM_subset.bam |" );
+if ( -d "t/data/outpath" ){
+	rmtree( "t/data/outpath");
+}
 
-$object->splitSAM( 't/data/barcodes.tsv', 't/data/outpath', *IN );
+open ( IN , "samtools view -h t/data/ChrM_subset.bam |" );
+
+$object->splitSAM( 't/data/barcodes.tsv', 't/data/outpath', <IN> );
 
 close ( IN );

@@ -1,36 +1,72 @@
-# ![nfcore/test-datasets](docs/images/test-datasets_logo.png)
-Test data to be used for automated testing with the nf-core pipelines
+# nf-core/mitotags test files
 
-## Introduction
+This is the minimal test files to test the nf-core/mitotags package.
 
-nf-core is a collection of high quality Nextflow pipelines. This repository contains various files for CI and unit testing of nf-core pipelines and infrastructure.
+## input 
 
-The principle for nf-core test data is as small as possible, as large as necessary. Always ask for guidance on the [nf-core slack](https://nf-co.re/join) before adding new test data.
+ChrM_testData_R1_001.fastq.gz
 
-## Documentation
-
-nf-core/test-datasets comes with documentation in the `docs/` directory:
-
-01. [Add a new  test dataset](https://github.com/nf-core/test-datasets/blob/master/docs/ADD_NEW_DATA.md)
-02. [Use an existing test dataset](https://github.com/nf-core/test-datasets/blob/master/docs/USE_EXISTING_DATA.md)
-
-## Downloading test data
-
-Due the large number of large files in this repository for each pipeline, we highly recommend cloning only the branches you would use.
-
-```bash
-git clone <url> --single-branch --branch <pipeline/modules/branch_name>
+```
+bedtools bamtofastq -i ChrM_subset.bam -fq ChrM_testData_R1_001.fastq -fq2 ChrM_testData_R2_001.fastq
+gzip *.fastq
 ```
 
-To subsequently clone other branches[^1]
+## bam 
 
-```bash
-git remote set-branches --add origin [remote-branch]
-git fetch
+ChrM_subset.bam
+
+
+```
+wget https://s3-us-west-2.amazonaws.com/10x.files/samples/cell-arc/2.0.0/10k_PBMC_Multiome_nextgem_Chromium_X/10k_PBMC_Multiome_nextgem_Chromium_X_atac_possorted_bam.bam
+wget https://s3-us-west-2.amazonaws.com/10x.files/samples/cell-arc/2.0.0/10k_PBMC_Multiome_nextgem_Chromium_X/10k_PBMC_Multiome_nextgem_Chromium_X_atac_possorted_bam.bam.bai
+samtools view 10k_PBMC_Multiome_nextgem_Chromium_X_atac_possorted_bam.bam chrM:15000-22000 -b > Chrm_subset.bam
+## find the 300 highest chrM read count barcodes and split on them.
+gunzip barcodes.tsv
+samtools view -h Chrm_subset.bam | head -n 3000 | grep "^@" > ChrM_subset.sam
+samtools view Chrm_subset.bam | grep -f barcodes.tsv  >> ChrM_subset.sam
+samtools view ChrM_subset.sam -b > ChrM_subset.bam
+gzip barcodes.tsv
+rm Chrm_subset.bam 
+rm ChrM_subset.sam
+
 ```
 
-## Support
+## bai
 
-For further information or help, don't hesitate to get in touch on our [Slack organisation](https://nf-co.re/join/slack) (a tool for instant messaging).
+ChrM_subset.bam.bai
 
-[^1]: From [stackoverflow](https://stackoverflow.com/a/60846265/11502856)
+```
+samtools index ChrM_subset.bam
+```
+
+## barcodes  
+
+barcodes.tsv.gz
+
+```
+samtools view Chrm_subset.bam | grep -o "CB:Z:[AGCT]*-1" > barcodes_total.txt
+```
+
+R script to get the top 300 barcodes:
+
+```
+dat = scan( 'barcodes_total.txt', what=character())
+write ( names( sort(table(dat), decreasing=TRUE)[1:300]), file="barcodes.tsv" )
+```
+
+Or on the command line (slow!):
+
+```
+sort barcodes_total.txt | uniq -c > barcodes_unique.txt
+sort -k 2n  barcodes_unique.txt| head -n 300 | cut -f1 > barcodes.tsv
+```
+
+Clean up
+
+```
+gzip barcodes.tsv
+rm barcodes_total.txt
+```
+
+## genome 
+ChrM.fa.gz
