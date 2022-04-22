@@ -66,6 +66,32 @@ sub readBarcodes
 
 }
 
+
+=head2 annotate10xcells
+
+ Usage     : SingelCellSAM::annotate10xcells( samStream, annotationReadFQ )
+ Purpose   : use the annotation R2 (or R3) fastq file to annotate the reads in the (bwa) sam file
+ Returns   : print the resulting sam strings to STDOUT
+ Argument  : the sam file stream an the fastq file with the annotation read
+ Throws    : Exceptions and other anomolies
+ Comment   : Adds the 10x annotation tags to each bwa mapped read.
+
+=cut
+
+sub annotate10xcells
+{
+    my ( $class, $samStream, $annotationReadFQ ) = @_;
+
+    ## The test files should have been created in
+    ## /home/stefanl/NAS/TestData_ChrM_SNPs/10k_PBMC_Multiome_nextgem_Chromium_X_fastqs/10k_PBMC_Multiome_nextgem_Chromium_X_atac
+    ## on aurora-ls2.lunarc.lu.se
+
+    die ( "not implemented" );
+
+}
+
+
+
 =head2 changeReadGroup
 
  Usage     : SingelCellSAM::changeReadGroup( sam/bam ifile, opath, source, taget )
