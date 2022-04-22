@@ -85,6 +85,8 @@ sub annotate10xcells
     ## The test files should have been created in
     ## /home/stefanl/NAS/TestData_ChrM_SNPs/10k_PBMC_Multiome_nextgem_Chromium_X_fastqs/10k_PBMC_Multiome_nextgem_Chromium_X_atac
     ## on aurora-ls2.lunarc.lu.se
+    ## logics should follow https://github.com/stela2502/Chromium_SingleCell_Perl/blob/master/bin/BAM_restore_CellRanger.pl
+    ## or better this: https://github.com/stela2502/Chromium_SingleCell_Perl/blob/master/bin/SplitToCells.pl
 
     die ( "not implemented" );
 
