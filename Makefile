@@ -164,7 +164,11 @@ O_FILES  =
 H_FILES  = 
 MAN1PODS = 
 MAN3PODS = lib/SingelCellSAM.pm \
-	lib/SingelCellSAM/Barcodes.pm
+	lib/SingelCellSAM/BAMfile.pm \
+	lib/SingelCellSAM/BAMfile/BamEntry.pm \
+	lib/SingelCellSAM/Barcodes.pm \
+	lib/SingelCellSAM/FastqFile.pm \
+	lib/SingelCellSAM/FastqFile/FastqEntry.pm
 
 # Where is the Config information that we are using/depend on
 CONFIGDEP = $(PERL_ARCHLIBDEP)$(DFSEP)Config.pm $(PERL_INCDEP)$(DFSEP)config.h
@@ -188,7 +192,11 @@ PERL_ARCHIVE_AFTER =
 
 
 TO_INST_PM = lib/SingelCellSAM.pm \
-	lib/SingelCellSAM/Barcodes.pm
+	lib/SingelCellSAM/BAMfile.pm \
+	lib/SingelCellSAM/BAMfile/BamEntry.pm \
+	lib/SingelCellSAM/Barcodes.pm \
+	lib/SingelCellSAM/FastqFile.pm \
+	lib/SingelCellSAM/FastqFile/FastqEntry.pm
 
 
 # --- MakeMaker platform_constants section:
@@ -417,10 +425,18 @@ POD2MAN = $(POD2MAN_EXE)
 
 manifypods : pure_all config  \
 	lib/SingelCellSAM.pm \
-	lib/SingelCellSAM/Barcodes.pm
+	lib/SingelCellSAM/BAMfile.pm \
+	lib/SingelCellSAM/BAMfile/BamEntry.pm \
+	lib/SingelCellSAM/Barcodes.pm \
+	lib/SingelCellSAM/FastqFile.pm \
+	lib/SingelCellSAM/FastqFile/FastqEntry.pm
 	$(NOECHO) $(POD2MAN) --section=$(MAN3EXT) --perm_rw=$(PERM_RW) -u \
 	  lib/SingelCellSAM.pm $(INST_MAN3DIR)/SingelCellSAM.$(MAN3EXT) \
-	  lib/SingelCellSAM/Barcodes.pm $(INST_MAN3DIR)/SingelCellSAM::Barcodes.$(MAN3EXT) 
+	  lib/SingelCellSAM/BAMfile.pm $(INST_MAN3DIR)/SingelCellSAM::BAMfile.$(MAN3EXT) \
+	  lib/SingelCellSAM/BAMfile/BamEntry.pm $(INST_MAN3DIR)/SingelCellSAM::BAMfile::BamEntry.$(MAN3EXT) \
+	  lib/SingelCellSAM/Barcodes.pm $(INST_MAN3DIR)/SingelCellSAM::Barcodes.$(MAN3EXT) \
+	  lib/SingelCellSAM/FastqFile.pm $(INST_MAN3DIR)/SingelCellSAM::FastqFile.$(MAN3EXT) \
+	  lib/SingelCellSAM/FastqFile/FastqEntry.pm $(INST_MAN3DIR)/SingelCellSAM::FastqFile::FastqEntry.$(MAN3EXT) 
 
 
 
@@ -875,7 +891,11 @@ ppd :
 pm_to_blib : $(FIRST_MAKEFILE) $(TO_INST_PM)
 	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', q[$(PM_FILTER)], '\''$(PERM_DIR)'\'')' -- \
 	  'lib/SingelCellSAM.pm' 'blib/lib/SingelCellSAM.pm' \
-	  'lib/SingelCellSAM/Barcodes.pm' 'blib/lib/SingelCellSAM/Barcodes.pm' 
+	  'lib/SingelCellSAM/BAMfile.pm' 'blib/lib/SingelCellSAM/BAMfile.pm' \
+	  'lib/SingelCellSAM/BAMfile/BamEntry.pm' 'blib/lib/SingelCellSAM/BAMfile/BamEntry.pm' \
+	  'lib/SingelCellSAM/Barcodes.pm' 'blib/lib/SingelCellSAM/Barcodes.pm' \
+	  'lib/SingelCellSAM/FastqFile.pm' 'blib/lib/SingelCellSAM/FastqFile.pm' \
+	  'lib/SingelCellSAM/FastqFile/FastqEntry.pm' 'blib/lib/SingelCellSAM/FastqFile/FastqEntry.pm' 
 	$(NOECHO) $(TOUCH) pm_to_blib
 
 

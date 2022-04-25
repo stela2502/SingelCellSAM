@@ -45,7 +45,7 @@ A simple fastq entry class
 
 =head2 new ( $hash )
 
-new returns a new object reference of the class stefans_libs::FastqFile::FastqEntry.
+new returns a new object reference of the class SingelCellSAM::FastqFile::FastqEntry.
 All entries of the hash will be copied into the objects hash - be careful t use that right!
 
 =cut
@@ -61,12 +61,38 @@ sub new {
 		$self->{$_} = $hash->{$_};
 	}
 
-	bless $self, $class if ( $class eq "stefans_libs::FastqFile::FastqEntry" );
+	bless $self, $class if ( $class eq "SingelCellSAM::FastqFile::FastqEntry" );
 	$self->clear();
 
 	return $self;
 
 }
+
+
+=head2 fromFile
+
+ Usage     : SingelCellSAM::FastqFile::FastqEntry::fromFile( $fh )
+ Purpose   : read a full fastq entry from the file handle and return that
+ Returns   : a SingelCellSAM::FastqFile object
+ Argument  : the file handle to read from
+ Throws    : Exceptions and other anomolies
+ Comment   : parse through a fastq file one entry at a time
+
+=cut
+
+sub fromFile{
+	my ( $self, $fh ) = @_;
+	while ( not $self->is_filled() ){
+		if ( $fh and my $line = <$fh>) {
+			$self-> Add( $line );
+		}
+		else {
+			return undef;
+		}
+	}
+	return $self;
+}
+
 
 sub clear {
 	my ($self) = @_;
@@ -78,6 +104,7 @@ sub is_filled {
 	my $self = shift;
 	return @{ $self->{'data'} } == 4;
 }
+
 
 sub Add {
 	my ( $self, $line ) = @_;
@@ -95,7 +122,7 @@ sub Add {
 
 sub copy {
 	my ($self) = @_;
-	my $ret = stefans_libs::FastqFile::FastqEntry->new();
+	my $ret = SingelCellSAM::FastqFile::FastqEntry->new();
 	foreach ( @{ $self->{'data'} } ) {
 		$ret->Add($_);
 	}
@@ -123,7 +150,10 @@ sub sequence {
 sub name {
 	my ( $self, $v ) = @_;
 	@{ $self->{'data'} }[0] = $v if ( defined $v );
-	return @{ $self->{'data'} }[0];
+	# real name I need has no @ and no space!
+	my @tmp = split( /\s/,  @{ $self->{'data'} }[0]) ;
+	$tmp[0] =~ s/^@//;
+	return $tmp[0];
 }
 
 sub quality {

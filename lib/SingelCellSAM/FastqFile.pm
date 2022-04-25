@@ -32,7 +32,7 @@ like 'perldoc perlpod'.
 
 =head1 NAME
 
-stefans_libs::FastqFile
+SingelCellSAM::FastqFile
 
 =head1 DESCRIPTION
 
@@ -47,7 +47,7 @@ A simple interface to a fastq file
 
 =head2 new ( $hash )
 
-new returns a new object reference of the class stefans_libs::FastqFile.
+new returns a new object reference of the class SingelCellSAM::FastqFile.
 All entries of the hash will be copied into the objects hash - be careful t use that right!
 
 =cut
@@ -63,7 +63,7 @@ sub new {
 		$self->{$_} = $hash->{$_};
 	}
 
-	bless $self, $class if ( $class eq "stefans_libs::FastqFile" );
+	bless $self, $class if ( $class eq "SingelCellSAM::FastqFile" );
 
 	return $self;
 
@@ -90,7 +90,7 @@ the filter function has to process the fastq file entry by entry.
 
 =head3 example usage
 
-my $fastqObj = stefans_libs::FastqFile->new();
+my $fastqObj = SingelCellSAM::FastqFile->new();
 
 open ( my $OUT, ">some_file" );
 $restrict = sub {
@@ -170,7 +170,7 @@ my $func = sub{
 	}
 };
 
-my $worker = stefans_libs::FastqFile->new();
+my $worker = SingelCellSAM::FastqFile->new();
 
 
 $worker->filter_multiple_files(
@@ -236,7 +236,7 @@ sub fastq_line {
 	$id ||= 0;
 	$self->{fastq_entry} ||= [];
 	@{ $self->{fastq_entry} }[$id] ||=
-	  stefans_libs::FastqFile::FastqEntry->new();
+	  SingelCellSAM::FastqFile::FastqEntry->new();
 	@{ $self->{fastq_entry} }[$id]->Add($line);
 	if ( @{ $self->{fastq_entry} }[$id]->is_filled() ) {
 		return @{ $self->{fastq_entry} }[$id];

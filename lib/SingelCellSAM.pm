@@ -2,7 +2,9 @@ package SingelCellSAM;
 
 
 use strict;
+use SingelCellSAM::BAMfile::BamEntry;
 use SingelCellSAM::Barcodes;
+use SingelCellSAM::FastqFile::FastqEntry;
 
 use File::Basename;
 
@@ -80,15 +82,50 @@ sub readBarcodes
 
 sub annotate10xcells
 {
-    my ( $class, $samStream, $annotationReadFQ ) = @_;
+    my ( $class, $samStream, $annotationReadFQ, $cell_barcode_length ) = @_;
+
+
+    $cell_barcode_length ||= 16;
 
     ## The test files should have been created in
     ## /home/stefanl/NAS/TestData_ChrM_SNPs/10k_PBMC_Multiome_nextgem_Chromium_X_fastqs/10k_PBMC_Multiome_nextgem_Chromium_X_atac
     ## on aurora-ls2.lunarc.lu.se
     ## logics should follow https://github.com/stela2502/Chromium_SingleCell_Perl/blob/master/bin/BAM_restore_CellRanger.pl
     ## or better this: https://github.com/stela2502/Chromium_SingleCell_Perl/blob/master/bin/SplitToCells.pl
+    my ( $fastqEntry, $bamEntry );    ## f1, f2, i1
 
-    die ( "not implemented" );
+    print( "I got the samStream '$samStream' and the annotationReadFQ '$annotationReadFQ'\n\n");
+
+    my $i = 0;
+    while ( 1 ) {
+        $i ++;
+        $bamEntry = SingelCellSAM::BAMfile::BamEntry->new();
+        $bamEntry = $bamEntry->fromFile ( $samStream );
+
+        return "finished" if ( not defined $bamEntry);
+        $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+        $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
+
+        if ( not $fastqEntry->name()  eq  $bamEntry->name() ) {
+            die( "line $i: The bam entry \n'".$bamEntry->name()."' does not match the fastq entry name \n'".$fastqEntry->name()."'\n" );
+        }
+        
+        print STDERR "\n".join("\t", @{$bamEntry->{'data'}})."\n" ;
+        print STDERR "And the fastq entry:\n'".$fastqEntry->name."'\n'".$fastqEntry->sequence."'\n";
+
+        #     CR:Z:
+            
+        # ACACCGGCAAACCAGC
+        # CB:Z:
+        #     TAGTGGCGTACTGAAT-1
+        # GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGATATCGGTTGTTATAG
+
+        my $UMI_tag =
+          substr( $fastqEntry->sequence, $cell_barcode_length );
+    }
+
+
+    #die ( "not implemented" );
 
 }
 
