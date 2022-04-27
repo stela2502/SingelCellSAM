@@ -14,7 +14,11 @@ my %WriteMakefileArgs = (
     PREREQ_PM           => {
         'Test::Simple' => 0.44,
     },
-    EXE_FILES => [ "bin/split10xsam.pl", "bin/changeReadGroup.pl" ],
+    EXE_FILES => [ 
+        "bin/split10xsam.pl", 
+        "bin/changeReadGroup.pl",
+        "bin/add10xTags.pl" 
+    ],
     ( eval { ExtUtils::MakeMaker->VERSION(6.46) } ? () : ( META_MERGE => {
         'meta-spec' => { version => 2 },
         dynamic_config => 1,

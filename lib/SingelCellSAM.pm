@@ -42,10 +42,15 @@ sub new
     my ($class) = @_;
 
     my $self = bless ({}, ref ($class) || $class);
-
+    open ( my $stdout, ">&", STDOUT );
+    $self->{'out'} = $stdout;
     return $self;
 }
 
+DESTROY{
+    my $self = shift;
+    close ( $self->{'out'} );
+}
 
 =head2 readBarcodes
 
@@ -82,51 +87,81 @@ sub readBarcodes
 
 sub annotate10xcells
 {
-    my ( $class, $samStream, $annotationReadFQ, $cell_barcode_length ) = @_;
+    my ( $self, $samStream, $annotationReadFQ, $I1read, $cell_barcode_length, $bcFile ) = @_;
 
 
-    $cell_barcode_length ||= 16;
+    $cell_barcode_length ||= 15;
 
     ## The test files should have been created in
     ## /home/stefanl/NAS/TestData_ChrM_SNPs/10k_PBMC_Multiome_nextgem_Chromium_X_fastqs/10k_PBMC_Multiome_nextgem_Chromium_X_atac
     ## on aurora-ls2.lunarc.lu.se
     ## logics should follow https://github.com/stela2502/Chromium_SingleCell_Perl/blob/master/bin/BAM_restore_CellRanger.pl
     ## or better this: https://github.com/stela2502/Chromium_SingleCell_Perl/blob/master/bin/SplitToCells.pl
-    my ( $fastqEntry, $bamEntry );    ## f1, f2, i1
+    my ( $fastqEntry, $bamEntry, $I1entry, $bcs, $bc );    ## f1, f2, i1
 
-    print( "I got the samStream '$samStream' and the annotationReadFQ '$annotationReadFQ'\n\n");
+    #print( "I got the samStream '$samStream' and the annotationReadFQ '$annotationReadFQ'\n\n");
 
     my $i = 0;
+    $bcs = {};
     while ( 1 ) {
         $i ++;
         $bamEntry = SingelCellSAM::BAMfile::BamEntry->new();
         $bamEntry = $bamEntry->fromFile ( $samStream );
 
-        return "finished" if ( not defined $bamEntry);
+        last  if ( not defined $bamEntry);
+
         $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
         $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
+        
+        die "the bam entry ".$bamEntry->name()." has no line in the fastq file\n" if ( not defined $fastqEntry);
+
+        $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+        $I1entry = $I1entry -> fromFile ( $I1read );
 
         if ( not $fastqEntry->name()  eq  $bamEntry->name() ) {
             die( "line $i: The bam entry \n'".$bamEntry->name()."' does not match the fastq entry name \n'".$fastqEntry->name()."'\n" );
         }
         
-        print STDERR "\n".join("\t", @{$bamEntry->{'data'}})."\n" ;
-        print STDERR "And the fastq entry:\n'".$fastqEntry->name."'\n'".$fastqEntry->sequence."'\n";
+        #print STDERR "\n".join("\t", @{$bamEntry->{'data'}})."\n" ;
+        #print STDERR "And the fastq entry:\n'".$fastqEntry->name."'\n'".$fastqEntry->sequence."'\n";
 
-        #     CR:Z:
-            
+        $bc = substr( revSeq( $fastqEntry->sequence() ), 0, $cell_barcode_length );
+        $bcs->{$bc} ||= 0;
+        $bcs->{$bc} ++;
+
+        $bamEntry ->Add ( join( ":", "CR","Z", $bc ) );
+        $bamEntry ->Add ( join( ":", "CY","Z", substr( revSeq( $fastqEntry->quality() ), 0, $cell_barcode_length ) ) );
+
+        # BC:Z:TACGAGTT   QT:Z:F:FFFFFF
+        $bamEntry ->Add ( join( ":", "BC","Z",  $I1entry->sequence()  ) );
+        $bamEntry ->Add ( join( ":", "QT","Z",  $I1entry->quality()   ) );
+
+        $bamEntry -> print( $self->{'out'} );
+        # for the atac sequences the reverse R2 is the sample tag "CR:Z:" rev(R2)[0..15]
+        # the CB:Z: tag looks like black magic to me. I can not determine how that one is created.
+
+        #     CR:Z:    
         # ACACCGGCAAACCAGC
         # CB:Z:
         #     TAGTGGCGTACTGAAT-1
         # GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGATATCGGTTGTTATAG
-
-        my $UMI_tag =
-          substr( $fastqEntry->sequence, $cell_barcode_length );
     }
 
+    
 
-    #die ( "not implemented" );
+    foreach my $key ( sort { $bcs->{$b} <=> $bcs->{$a} } keys(%$bcs) ){
+        print $bcFile "$key\t$bcs->{$key}\n";
+    }
 
+    $self->{'bcs'} = $bcs;
+    return ($self);
+}
+
+sub revSeq{
+    my ( $origin_seq ) = @_;
+    my $revcomp = reverse $origin_seq;
+    $revcomp =~ tr/ATGCatgc/TACGtacg/;
+    return $revcomp;
 }
 
 
@@ -287,7 +322,7 @@ sub splitSAM
     # recursion if there are too many cells!
     #############################
     my @res = $barcodes->writeNewBarcodeFiles();
-    DESTROY( $barcodes );
+    undef $barcodes;
     foreach my $bcRes ( @res ) { ## only if there are multiple reads in one file.
         my $IN;
         #print( "we have summary information:", join(",",@$bcRes)."\n");
