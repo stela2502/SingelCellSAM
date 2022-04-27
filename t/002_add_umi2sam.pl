@@ -38,7 +38,7 @@ open ( my $out1, ">t/data/outpath/annotated.sam") or die $!;
 $object->{'out'} = $out1;
 
 
-$object->annotate10xcells( $IN, $FASTQ, $I1, 15, $out );
+$object->annotate10xcells( $IN, $FASTQ, $I1, $out );
 
 close ( $IN );
 close( $FASTQ );

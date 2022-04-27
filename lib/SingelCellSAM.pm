@@ -76,10 +76,10 @@ sub readBarcodes
 
 =head2 annotate10xcells
 
- Usage     : SingelCellSAM::annotate10xcells( samStream, annotationReadFQ )
- Purpose   : use the annotation R2 (or R3) fastq file to annotate the reads in the (bwa) sam file
- Returns   : print the resulting sam strings to STDOUT
- Argument  : the sam file stream an the fastq file with the annotation read
+ Usage     : SingelCellSAM::annotate10xcells( samStream, annotationReadFQ, $I1read, $bcFile, $cell_barcode_length=15 )
+ Purpose   : use the annotation R2 and I1 fastq files to annotate the reads in the (bwa) sam file
+ Returns   : print the resulting sam strings to STDOUT and a per cell count into the bcFiles
+ Argument  : the sam file stream and the fastq files with the annotation read as well as the bcFile
  Throws    : Exceptions and other anomolies
  Comment   : Adds the 10x annotation tags to each bwa mapped read.
 
@@ -87,7 +87,7 @@ sub readBarcodes
 
 sub annotate10xcells
 {
-    my ( $self, $samStream, $annotationReadFQ, $I1read, $cell_barcode_length, $bcFile ) = @_;
+    my ( $self, $samStream, $annotationReadFQ, $I1read, $bcFile, $cell_barcode_length ) = @_;
 
 
     $cell_barcode_length ||= 15;
