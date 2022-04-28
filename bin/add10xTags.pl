@@ -34,5 +34,5 @@ if ( undef $barcodes ){
 
 my $object = SingelCellSAM->new ();
 
-$object->annotate10xcells( \*STDIN , $FASTQ, $I1, $barcodes );
+$object->annotate10xcells( \*STDIN , $R2, $I1, $barcodes );
 
