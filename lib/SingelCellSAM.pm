@@ -110,7 +110,8 @@ sub annotate10xcells
 
         last  if ( not defined $bamEntry);
 
-        unless ( $fastqEntry->name()  eq  $bamEntry->name() ){
+
+        if ( undef $fastqEntry or  not $fastqEntry->name()  eq  $bamEntry->name() ){
             #if the sequence is paired we get two bam entries per read pair.
             $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
             $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
