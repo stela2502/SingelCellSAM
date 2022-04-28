@@ -18,7 +18,7 @@ and the sam entries of that genome should be piped through this tool.
 The barcodes.tsv file would contain the sorted cell barcodes and read counts per barcode.
 The modified bam reads are written to STDOUT.
 
-"
+";
 
 unless ( -f $R2 ){
 	die ( $usage )
