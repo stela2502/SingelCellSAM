@@ -69,13 +69,7 @@ sub fromFile{
   my ( $self, $fh ) = @_;
   
   if ( $fh and my $line = <$fh> ) {
-    if ( $line =~ m/^@/ ){
-      print $line;
-      return 0;
-    }
-    chomp($line);
-
-    $self->{'data'} = [ split("\t", $line) ];
+    return $self->fromLine( $line );
   }
   else {
       return undef;
@@ -83,6 +77,32 @@ sub fromFile{
 
   return $self;
 }
+
+
+=head2 fromLine
+
+ Usage     : SingelCellSAM::BAMfile::BamEntry::fromFile( $line )
+ Purpose   : split the bam entry by tab and 'package that info into this object
+ Returns   : a SingelCellSAM::BAMfile::BamEntry object or prints the header and returnd 0
+ Argument  : the file handle to read from
+ Throws    : Exceptions and other anomalies
+ Comment   : parse one SAM file line
+
+=cut
+
+sub fromLine{
+  my ( $self, $line ) = @_;
+  
+  if ( $line =~ m/^@/ ){
+    print $line;
+    return 0;
+  }
+  chomp($line);
+  $self->{'data'} = [ split("\t", $line) ];
+
+  return $self;
+}
+
 
 =head2 print
 

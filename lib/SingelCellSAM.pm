@@ -76,7 +76,7 @@ sub readBarcodes
 
 =head2 annotate10xcells
 
- Usage     : SingelCellSAM::annotate10xcells( samStream, annotationReadFQ, $I1read, $bcFile, $cell_barcode_length=15 )
+ Usage     : SingelCellSAM::annotate10xcells( R2fileStream, I1fileStream, $bcFileStream, $cell_barcode_length=15 )
  Purpose   : use the annotation R2 and I1 fastq files to annotate the reads in the (bwa) sam file
  Returns   : print the resulting sam strings to STDOUT and a per cell count into the bcFiles
  Argument  : the sam file stream and the fastq files with the annotation read as well as the bcFile
@@ -87,7 +87,7 @@ sub readBarcodes
 
 sub annotate10xcells
 {
-    my ( $self, $samStream, $annotationReadFQ, $I1read, $bcFile, $cell_barcode_length ) = @_;
+    my ( $self, $annotationReadFQ, $I1read, $bcFile, $cell_barcode_length ) = @_;
 
 
     $cell_barcode_length ||= 15;
@@ -103,24 +103,40 @@ sub annotate10xcells
 
     my $i = 0;
     $bcs = {};
-    while ( 1 ) {
-        $i ++;
+    while ( my $line = <STDIN> ) {
+
+        #print STDERR $line;
+
         $bamEntry = SingelCellSAM::BAMfile::BamEntry->new();
-        $bamEntry = $bamEntry->fromFile ( $samStream );
+        $bamEntry = $bamEntry->fromLine ( $line );
+
 
         last  if ( not defined $bamEntry);
 
+        if ( $bamEntry == 0 ){
+            ## this has been a comment!
+            next;
+        }
 
-        if ( undef $fastqEntry or  not $fastqEntry->name()  eq  $bamEntry->name() ){
+        $i++;
+
+        if ( not defined $fastqEntry){
+            #print STDERR "I get my first fastq entries\n";
+            $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+            $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
+            $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+            $I1entry = $I1entry -> fromFile ( $I1read );
+        } 
+        elsif ( not $fastqEntry->name()  eq  $bamEntry->name() ){
             #if the sequence is paired we get two bam entries per read pair.
             $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
             $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
+            $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+            $I1entry = $I1entry -> fromFile ( $I1read );
         }
         
         die "the bam entry ".$bamEntry->name()." has no line in the fastq file\n" if ( not defined $fastqEntry);
 
-        $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-        $I1entry = $I1entry -> fromFile ( $I1read );
 
         if ( not $fastqEntry->name()  eq  $bamEntry->name() ) {
             die( "line $i: The bam entry \n'".$bamEntry->name()."' does not match the fastq entry name \n'".$fastqEntry->name()."'\n" );
@@ -151,13 +167,15 @@ sub annotate10xcells
         # GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGATATCGGTTGTTATAG
     }
 
-    
-
     foreach my $key ( sort { $bcs->{$b} <=> $bcs->{$a} } keys(%$bcs) ){
+        $bcs->{$key} = $bcs->{$key} / 2;
+        #print STDERR "$key\t$bcs->{$key}\n";
         print $bcFile "$key\t$bcs->{$key}\n";
     }
 
     $self->{'bcs'} = $bcs;
+
+    print  STDERR "SingelCellSAM::annotate10xcells finished: ",scalar(keys%$bcs)." 'cell barcodes' detected.\n";
     return ($self);
 }
 

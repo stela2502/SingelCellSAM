@@ -22,6 +22,7 @@ if ( -d $path ){
 	die "outpath $path already exists!\n";
 }
 
+
 $analyzer->splitSAM( $barcodeF, $path, "STDIN" );
 
 print "Finished\n";
