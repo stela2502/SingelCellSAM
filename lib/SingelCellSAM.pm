@@ -190,51 +190,59 @@ sub revSeq{
 
 =head2 changeReadGroup
 
- Usage     : SingelCellSAM::changeReadGroup( sam/bam ifile, opath, source, taget )
+ Usage     : SingelCellSAM::changeReadGroup( source, taget )
  Purpose   : replace the read group by the single cell tag
  Returns   : NULL
  Argument  : 
  Throws    : Exceptions and other anomolies
- Comment   : The source for a 10x data set should be "CB:Z" and the target "RG:Z"
+ Comment   : The function reads from STDIN and prints to STDOUT.
+             The source for a 10x data set should be "CR:Z" and the target "RG:Z"
 
 =cut
 
 sub changeReadGroup
 {
 
-    my ($self, $ifile, $opath, $source, $target) = @_;
-    $source = "CB:Z" unless ( defined $source);
-    $target = "RG:Z" unless ( defined $target);
+    my ($self, $barcodes, $minNumi, $source, $target) = @_;
 
-    unless ( -f $ifile ) {
-        die "changeReadGroup: ifile '$ifile' is no file!";
+    $minNumi ||= 100;
+    $source  ||= "CR:Z";
+    $target  ||= "RG:Z";
+
+    my $bcs = {};
+    my ($bc, $nUMI, $line, $RGmissing );
+    $RGmissing = 1;
+    open (my $bar , "<$barcodes") or die $!;
+    while( my $bc  = <$bar> ){
+        chomp($bc);
+        ( $bc, $nUMI ) = split("\t", $bc);
+        $bcs->{$bc} =1 if ( $nUMI > $minNumi);
+    }
+    close ($bar);
+
+    while ( <STDIN> ){
+        $line = $self->change( $_, $bcs, $source, $target );
+        if ( $line =~ m/^\@RG/ ){
+            if ( $RGmissing ){
+                $RGmissing = 0; # do that only once
+                @lines = (map { "\@RG\tID:$_\tSM:$_\n" } keys %$bcs );
+                print join("", @lines);
+
+            } 
+            ## get rid of all other @RG entries...
+            next;
+        }
+
+        print $line if (defined $line );
     }
 
-    unless ( -d $opath ){
-        mkdir( $opath ) or die $!;
-    }
-
-    my $in;
-    if ( $ifile =~ m/sam$/ ) {
-        open ( $in, "<$ifile") or die $!;
-    }elsif ( $ifile =~ m/bam$/ ){
-        open ( $in, "samtools view -h $ifile|" ) or die $!;
-    }
-    open ( my $out, ">".$opath."/".basename( $ifile ).".sam" ) or die $!;
-    my ($s, $t, $line);
-    while ( <$in> ){
-        print $out $self->change( $_, $source, $target );
-    }
-    close ( $in );
-    close ( $out );
-    print "changed file: '$opath/".basename( $ifile ).".sam'\n";
     return $self;
 }
 
 sub change
 {
 
-    my ($self, $line, $source, $target) = @_;
+    my ($self, $line, $bcs, $source, $target) = @_;
     $source = "CB:Z" unless ( defined $source);
     $target = "RG:Z" unless ( defined $target);
 
@@ -245,6 +253,7 @@ sub change
     }
     if ( $line =~m/$source:([\w-\d]*)/ ){
         $s = $1;
+        return undef unless ( $bcs->{$s} );
         if ( $line =~m/$target:([\w-_:\d]*)/ ){
             $t = $1;
             $line =~ s/$t/$s/;

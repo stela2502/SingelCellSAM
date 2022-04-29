@@ -6,15 +6,17 @@ use SingelCellSAM;
 
 #sam/bam ifile, opath, source, taget
 
-my ($ifile, $path, $source, $target ) = @ARGV;
-unless ( -f $ifile ){
-	die ("I neeed a sam or bam file to modify")
-}
+my ( $barcodes,  $source, $target ) = @ARGV;
 
-unless ( defined $path ){
-	warn "second option is a outpath - missing and therefore set to modBam";
-	$path = "modBam";
-}
+my $usage =
+"samtools view <bam> | changeReadGroup.pl barcodes.tsv 'CR:Z' 'RG:Z' > <annotated.sam>
+
+Where bam and barcodes.tsv are input files.
+
+The barcodes.tsv file would contain the cell barcodes that should be exported.
+The modified sam reads are written to STDOUT.
+
+";
 
 print ("second argument \$path was '$path'");
 
@@ -24,6 +26,6 @@ if ( -d $path ){
 	die "outpath $path already exists!\n";
 }
 
-$analyzer->changeReadGroup( $ifile, $path, $source, $target );
+$analyzer->changeReadGroup( $barcodes, $source, $target );
 
 print "Finished\n";
