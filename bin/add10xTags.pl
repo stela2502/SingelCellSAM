@@ -62,7 +62,7 @@ unless ( -d $path ){
 open ( $bar, ">$barcodes") or die $!;
 
 
-$object->annotate10xcells( $r2, $i1, $bar );
+$object->annotate10xcells( \*STDIN, $r2, $i1, $bar );
 
 
 close ( $r2 );

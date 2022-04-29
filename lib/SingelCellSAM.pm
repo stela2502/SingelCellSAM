@@ -76,7 +76,7 @@ sub readBarcodes
 
 =head2 annotate10xcells
 
- Usage     : SingelCellSAM::annotate10xcells( R2fileStream, I1fileStream, $bcFileStream, $cell_barcode_length=15 )
+ Usage     : SingelCellSAM::annotate10xcells( SAMstream, R2fileStream, I1fileStream, $bcFileStream, $cell_barcode_length=15 )
  Purpose   : use the annotation R2 and I1 fastq files to annotate the reads in the (bwa) sam file
  Returns   : print the resulting sam strings to STDOUT and a per cell count into the bcFiles
  Argument  : the sam file stream and the fastq files with the annotation read as well as the bcFile
@@ -87,7 +87,7 @@ sub readBarcodes
 
 sub annotate10xcells
 {
-    my ( $self, $annotationReadFQ, $I1read, $bcFile, $cell_barcode_length ) = @_;
+    my ( $self, $IN, $annotationReadFQ, $I1read, $bcFile, $cell_barcode_length ) = @_;
 
 
     $cell_barcode_length ||= 15;
@@ -102,8 +102,9 @@ sub annotate10xcells
     #print( "I got the samStream '$samStream' and the annotationReadFQ '$annotationReadFQ'\n\n");
 
     my $i = 0;
+    my $fastqReads = 0;
     $bcs = {};
-    while ( my $line = <STDIN> ) {
+    while ( my $line = <$IN> ) {
 
         #print STDERR $line;
 
@@ -120,12 +121,15 @@ sub annotate10xcells
 
         $i++;
 
+        #print STDERR "The line we are on: $i\n";
+
         if ( not defined $fastqEntry){
             #print STDERR "I get my first fastq entries\n";
             $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
             $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
             $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
             $I1entry = $I1entry -> fromFile ( $I1read );
+            $fastqReads++;
         } 
         elsif ( not $fastqEntry->name()  eq  $bamEntry->name() ){
             #if the sequence is paired we get two bam entries per read pair.
@@ -133,13 +137,16 @@ sub annotate10xcells
             $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
             $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
             $I1entry = $I1entry -> fromFile ( $I1read );
+            $fastqReads ++;
         }
         
-        die "the bam entry ".$bamEntry->name()." has no line in the fastq file\n" if ( not defined $fastqEntry);
+        die "the bam entry ".$bamEntry->name()." has no line in one of the fastq files\n" 
+            if ( not defined $fastqEntry or not defined $I1entry);
 
 
         if ( not $fastqEntry->name()  eq  $bamEntry->name() ) {
-            die( "line $i: The bam entry \n'".$bamEntry->name()."' does not match the fastq entry name \n'".$fastqEntry->name()."'\n" );
+            die( "line $i: The bam entry \n'".$bamEntry->name().
+                "' does not match the fastq entry name \n'".$fastqEntry->name()."'\n" );
         }
         
         #print STDERR "\n".join("\t", @{$bamEntry->{'data'}})."\n" ;
@@ -167,10 +174,19 @@ sub annotate10xcells
         # GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGATATCGGTTGTTATAG
     }
 
-    foreach my $key ( sort { $bcs->{$b} <=> $bcs->{$a} } keys(%$bcs) ){
-        $bcs->{$key} = $bcs->{$key} / 2;
-        #print STDERR "$key\t$bcs->{$key}\n";
-        print $bcFile "$key\t$bcs->{$key}\n";
+    if ( $i > $fastqReads ){
+        foreach my $key ( sort { $bcs->{$b} <=> $bcs->{$a} } keys(%$bcs) ){
+            $bcs->{$key} = $bcs->{$key} / 2;
+            #print STDERR "$key\t$bcs->{$key}\n";
+            print $bcFile "$key\t$bcs->{$key}\n";
+        }
+    }
+    else {
+        foreach my $key ( sort { $bcs->{$b} <=> $bcs->{$a} } keys(%$bcs) ){
+            $bcs->{$key} = $bcs->{$key};
+            #print STDERR "$key\t$bcs->{$key}\n";
+            print $bcFile "$key\t$bcs->{$key}\n";
+        }
     }
 
     $self->{'bcs'} = $bcs;
@@ -190,12 +206,12 @@ sub revSeq{
 
 =head2 changeReadGroup
 
- Usage     : SingelCellSAM::changeReadGroup( source, taget )
+ Usage     : SingelCellSAM::changeReadGroup( $INstream, $OUTstream, $barcodesFile, $minNumi, source, taget )
  Purpose   : replace the read group by the single cell tag
  Returns   : NULL
  Argument  : 
  Throws    : Exceptions and other anomolies
- Comment   : The function reads from STDIN and prints to STDOUT.
+ Comment   : The function reads from STDIN and prints to STDOUT or any stream you give the function
              The source for a 10x data set should be "CR:Z" and the target "RG:Z"
 
 =cut
@@ -203,24 +219,36 @@ sub revSeq{
 sub changeReadGroup
 {
 
-    my ($self, $barcodes, $minNumi, $source, $target) = @_;
+    my ($self, $IN, $OUT, $barcodes, $minNumi, $source, $target) = @_;
 
     $minNumi ||= 100;
     $source  ||= "CR:Z";
     $target  ||= "RG:Z";
 
     my $bcs = {};
-    my ($bc, $nUMI, $line, $RGmissing );
+    my ($bc, $nUMI, $line, $RGmissing, @lines );
     $RGmissing = 1;
     open (my $bar , "<$barcodes") or die $!;
     while( my $bc  = <$bar> ){
         chomp($bc);
         ( $bc, $nUMI ) = split("\t", $bc);
-        $bcs->{$bc} =1 if ( $nUMI > $minNumi);
+        if ( defined $nUMI ){
+           $bcs->{$bc} =1 if ( $nUMI > $minNumi);
+        }else{
+           $bcs->{$bc} =1 
+        }
+        
     }
     close ($bar);
 
-    while ( <STDIN> ){
+    if (not defined $IN ){
+        $IN = <STDIN>;
+    }
+    if ( not defined $OUT){
+        $OUT = <STDOUT>;
+    }
+
+    while ( <$IN> ){
         $line = $self->change( $_, $bcs, $source, $target );
         if ( $line =~ m/^\@RG/ ){
             if ( $RGmissing ){
@@ -233,7 +261,7 @@ sub changeReadGroup
             next;
         }
 
-        print $line if (defined $line );
+        print $OUT $line if (defined $line );
     }
 
     return $self;
@@ -297,6 +325,7 @@ sub splitSAM
         ## fix the header lines:
         ########################
         if ($line =~ m/^@/ ) {
+            #die "This is a header line: $line";
             ## this needs to go into all the outfiles!
             ## read groups is a funny problem. Seams to be @RG elements in the read group, but they are not used as single cell id's
             ## I want to check whether I could make use of them like that.
@@ -319,32 +348,35 @@ sub splitSAM
                 } 
                 #die "some problems with the headers - please inspect and fix!\n";
                 }
+                #print STDERR "matcged to \@RG: $line\n";
             }else {
                 foreach my $fn (@{$barcodes->{'files'}} ){
+                    #print STDERR $line;
                     print $fn $line;
                 }
             }
-            
         }
         #########################
         # fix the data lines
         #########################
         elsif($line =~ m/CB:Z:([AGCTacgt]+-?\d*)/ ) {
-            if (defined $barcodes->{'barcodes'}->{$1}) {
-                chomp($line);
-                #################
-                # fix the RG entry
-                #################
-                $line = $self->change( $line, "CB:Z", "RG:Z" );
+            chomp($line);
+
+            #####################
+            # fix the RG entry
+            #####################
+            $line = $self->change( $line, $barcodes->{'barcodes'}, "CB:Z", "RG:Z" );
+            
+
+            if ( not defined $line ){
+                warn ("barcode $1 is not defined\n".scalar( keys %{$barcodes->{'barcodes'}} ));
+            }else {
                 #################
                 # get the correct outfile & print
                 #################
                 $tmp = $barcodes->{'barcodes'}->{$1};
                 print $tmp $line."\n";
-            }else {
-                warn ("barcode $1 is not defined\n".scalar( keys %{$barcodes->{'barcodes'}} ));
             }
-            #die $line."\n";
         }
         #########################
     }

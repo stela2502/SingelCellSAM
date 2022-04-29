@@ -23,7 +23,7 @@ print ("second argument \$path was '$path'");
 my $analyzer = SingelCellSAM->new();
 
 if ( -d $path ){
-	die "outpath $path already exists!\n";
+	die $usage;
 }
 
 $analyzer->changeReadGroup( $barcodes, $source, $target );
