@@ -3,13 +3,15 @@
 use strict;
 use warnings;
 use SingelCellSAM;
+use File::Spec;
+
 
 #sam/bam ifile, opath, source, taget
 
 my ( $barcodes,  $source, $target ) = @ARGV;
 
 my $usage =
-"samtools view <bam> | changeReadGroup.pl barcodes.tsv 'CR:Z' 'RG:Z' > <annotated.sam>
+"samtools view <bam,$source> | changeReadGroup.pl barcodes.tsv 'CR:Z' 'RG:Z' > <annotated.sam,$target>
 
 Where bam and barcodes.tsv are input files.
 
@@ -22,9 +24,21 @@ print ("second argument \$path was '$path'");
 
 my $analyzer = SingelCellSAM->new();
 
-if ( -d $path ){
+if ( -f $source ){
 	die $usage;
 }
+
+if ( not defined $target ){
+	die $usage;
+}
+
+my ($volume,$directories,$file) =File::Spec->splitpath( File::Spec->rel2abs ($target) );
+my $path = File::Spec->catfile($volume,$directories);
+unless ( -d $path ){
+	mkdir( $path ) or die "I tried to create the path $path:\n$!";
+}
+
+
 
 $analyzer->changeReadGroup( $barcodes, $source, $target );
 
