@@ -95,7 +95,7 @@ sub fromLine{
   
   if ( $line =~ m/^@/ ){
     print $line;
-    return 0;
+    return $line;
   }
   chomp($line);
   $self->{'data'} = [ split("\t", $line) ];

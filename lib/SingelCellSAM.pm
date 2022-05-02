@@ -113,9 +113,11 @@ sub annotate10xcells
 
 
         last  if ( not defined $bamEntry);
-
-        if ( $bamEntry == 0 ){
+        my $fh;
+        if ( not $bamEntry->isa('SingelCellSAM::BAMfile::BamEntry') ){
             ## this has been a comment!
+            $fh = $self->{'out'};
+            print $fh $bamEntry;
             next;
         }
 

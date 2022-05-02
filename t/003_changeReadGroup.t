@@ -29,3 +29,4 @@ close ( $OUT );
 
 ok ( -f "t/data/outpath/annotated.bam", "t/data/outpath/annotated.bam file");
 
+
