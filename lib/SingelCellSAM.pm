@@ -184,7 +184,7 @@ sub annotate10xcells
         }
     }
     else {
-        foreach my $key ( sort { $bcs->{$b} <=> $bcs->{$a} } keys(%$bcs) ){
+        foreach my $key ( keys(%$bcs) ){
             $bcs->{$key} = $bcs->{$key};
             #print STDERR "$key\t$bcs->{$key}\n";
             print $bcFile "$key\t$bcs->{$key}\n";
