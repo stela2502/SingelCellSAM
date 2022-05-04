@@ -164,6 +164,7 @@ sub annotate10xcells
         $bcs->{$bc} ++;
 
         $bamEntry ->Add ( join( ":", "CR","Z", $bc ) );
+        $bamEntry ->Add ( join( ":", "CB","Z", $bc ) ); # brutal hack to get the cell bar copdes in. Does only work to get the vcf files correctly.
         $bamEntry ->Add ( join( ":", "CY","Z", substr( revSeq( $fastqEntry->quality() ), 0, $cell_barcode_length ) ) );
 
         # BC:Z:TACGAGTT   QT:Z:F:FFFFFF
@@ -257,14 +258,15 @@ sub changeReadGroup
 
     while ( <STDIN> ){
         $line = $self->change( $_, $bcs, $source, $target );
-        if ( $line =~ m/^\@RG/ ){
+        if ( $line =~m/^@/ ){
             if ( $RGmissing ){
                 $RGmissing = 0; # do that only once
                 @lines = (map { "\@RG\tID:$_\tSM:$_\n" } keys %$bcs );
                 print STDOUT join("", @lines);
 
-            } 
-            ## get rid of all other @RG entries...
+            }
+        }
+        if ( $line =~ m/^\@RG/ ){
             next;
         }
         if ( $line ){
