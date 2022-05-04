@@ -251,7 +251,8 @@ sub changeReadGroup
         }
         
     }
-    close ($bar);
+    close ( $bar );
+    close ( $out );
 
     while ( <> ){
         $line = $self->change( $_, $bcs, $source, $target );
