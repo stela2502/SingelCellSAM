@@ -2,7 +2,7 @@
 
 # t/001_load.t - check module loading and create testing directory
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use File::Path;
 
@@ -35,7 +35,12 @@ my $cmd = "samtools view -h t/data/ChrM_subset.bam | perl -I lib bin/changeReadG
 if ( -f "t/data/outpath/annotated.sam" ){
 	unlink( "t/data/outpath/annotated.sam" );
 }
+if ( -f "t/data/barcodes.tsv.passing" ){
+	unlink( "t/data/barcodes.tsv.passing" );
+}
+
 
 system ( $cmd );
 
 ok ( -f "t/data/outpath/annotated.sam", "t/data/outpath/annotated.sam file");
+ok ( -f "t/data/barcodes.tsv.passing", "t/data/barcodes.tsv.passing file");
