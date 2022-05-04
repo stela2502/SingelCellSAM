@@ -226,7 +226,7 @@ sub revSeq{
 sub changeReadGroup
 {
 
-    my ($self, $IN, $OUT, $barcodes, $minNumi, $source, $target) = @_;
+    my ($self, $barcodes, $minNumi, $source, $target) = @_;
 
     $minNumi ||= 100;
     $source  ||= "CR:Z";
@@ -248,14 +248,7 @@ sub changeReadGroup
     }
     close ($bar);
 
-    if (not defined $IN ){
-        $IN = <STDIN>;
-    }
-    if ( not defined $OUT){
-        $OUT = <STDOUT>;
-    }
-
-    while ( <$IN> ){
+    while ( <> ){
         $line = $self->change( $_, $bcs, $source, $target );
         if ( $line =~ m/^\@RG/ ){
             if ( $RGmissing ){
@@ -268,7 +261,7 @@ sub changeReadGroup
             next;
         }
 
-        print $OUT $line if (defined $line );
+        print $line if (defined $line );
     }
 
     return $self;

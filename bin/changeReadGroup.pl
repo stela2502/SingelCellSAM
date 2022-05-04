@@ -8,7 +8,7 @@ use File::Spec;
 
 #sam/bam ifile, opath, source, taget
 
-my ( $barcodes,  $source, $target ) = @ARGV;
+my ( $barcodes, $minReads, $source, $target ) = @ARGV;
 
 my $usage =
 "samtools view <bam,$source> | changeReadGroup.pl barcodes.tsv 'CR:Z' 'RG:Z' > <annotated.sam,$target>
@@ -26,6 +26,6 @@ my $analyzer = SingelCellSAM->new();
 
 
 
-$analyzer->changeReadGroup( $barcodes, $source, $target );
+$analyzer->changeReadGroup( $barcodes, $minReads, $source, $target );
 
 print STDERR "Finished\n";
