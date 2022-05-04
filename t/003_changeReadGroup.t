@@ -2,7 +2,7 @@
 
 # t/001_load.t - check module loading and create testing directory
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 use File::Path;
 
@@ -29,4 +29,13 @@ BEGIN { use_ok( 'SingelCellSAM' ); }
 
 # ok ( -f "t/data/outpath/annotated.bam", "t/data/outpath/annotated.bam file");
 
+my $cmd = "samtools view -h t/data/ChrM_subset.bam | perl -I lib bin/changeReadGroup.pl t/data/barcodes.tsv 100 'CB:Z', 'RG:Z' ".
+	"> t/data/outpath/annotated.sam ";
 
+if ( -f "t/data/outpath/annotated.sam" ){
+	unlink( "t/data/outpath/annotated.sam" );
+}
+
+system ( $cmd );
+
+ok ( -f "t/data/outpath/annotated.sam", "t/data/outpath/annotated.sam file");

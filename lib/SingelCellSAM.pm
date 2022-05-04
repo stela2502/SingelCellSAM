@@ -254,20 +254,25 @@ sub changeReadGroup
     close ( $bar );
     close ( $out );
 
-    while ( <> ){
+
+    while ( <STDIN> ){
         $line = $self->change( $_, $bcs, $source, $target );
         if ( $line =~ m/^\@RG/ ){
             if ( $RGmissing ){
                 $RGmissing = 0; # do that only once
                 @lines = (map { "\@RG\tID:$_\tSM:$_\n" } keys %$bcs );
-                print join("", @lines);
+                print STDOUT join("", @lines);
 
             } 
             ## get rid of all other @RG entries...
             next;
         }
-
-        print $line if ( $line );
+        if ( $line ){
+            #print STDERR $line;
+            print STDOUT $line;
+        }else {
+            #print STDERR "FAILED: $_";
+        }
     }
 
     return $self;

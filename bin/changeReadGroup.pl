@@ -11,7 +11,7 @@ use File::Spec;
 my ( $barcodes, $minReads, $source, $target ) = @ARGV;
 
 my $usage =
-"samtools view <bam,$source> | changeReadGroup.pl barcodes.tsv 'CR:Z' 'RG:Z' > <annotated.sam,$target>
+"samtools view <bam> | changeReadGroup.pl barcodes.tsv <minreads> 'CR:Z' 'RG:Z' > <annotated.sam>
 
 Where bam and barcodes.tsv are input files.
 
@@ -20,7 +20,6 @@ The modified sam reads are written to STDOUT.
 
 ";
 
-print ("second argument \$target was '$target'");
 
 my $analyzer = SingelCellSAM->new();
 
