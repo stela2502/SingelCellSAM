@@ -104,6 +104,14 @@ sub annotate10xcells
     my $i = 0;
     my $fastqReads = 0;
     $bcs = {};
+
+    sub readSeqs {
+        my $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+        $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
+        my $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
+        $I1entry = $I1entry -> fromFile ( $I1read );
+        return ( $fastqEntry, $I1entry);
+    } 
     while ( my $line = <$IN> ) {
 
         #print STDERR $line;
@@ -126,26 +134,23 @@ sub annotate10xcells
         #print STDERR "The line we are on: $i\n";
 
         if ( not defined $fastqEntry){
-            #print STDERR "I get my first fastq entries\n";
-            $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-            $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
-            $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-            $I1entry = $I1entry -> fromFile ( $I1read );
+            ( $fastqEntry, $I1entry ) = readSeqs();
             $fastqReads++;
         } 
         elsif ( not $fastqEntry->name()  eq  $bamEntry->name() ){
             #if the sequence is paired we get two bam entries per read pair.
-            $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-            $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
-            $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-            $I1entry = $I1entry -> fromFile ( $I1read );
-            $fastqReads ++;
+            ( $fastqEntry, $I1entry ) = readSeqs();
+            $fastqReads++;
         }
         
         die "the bam entry ".$bamEntry->name()." has no line in one of the fastq files\n" 
             if ( not defined $fastqEntry or not defined $I1entry);
 
-
+        ## could be possible the initial alignement got already filtered.
+        ## read new fastq ewntries until we find the correct one.
+        while ( not $fastqEntry->name()  eq  $bamEntry->name() ) {
+            ( $fastqEntry, $I1entry ) = readSeqs();
+        }
         if ( not $fastqEntry->name()  eq  $bamEntry->name() ) {
             die( "line $i: The bam entry \n'".$bamEntry->name().
                 "' does not match the fastq entry name \n'".$fastqEntry->name()."'\n" );
