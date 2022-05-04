@@ -24,22 +24,8 @@ print ("second argument \$target was '$target'");
 
 my $analyzer = SingelCellSAM->new();
 
-if ( -f $source ){
-	die $usage;
-}
-
-if ( not defined $target ){
-	die $usage;
-}
-
-my ($volume,$directories,$file) =File::Spec->splitpath( File::Spec->rel2abs ($target) );
-my $path = File::Spec->catfile($volume,$directories);
-unless ( -d $path ){
-	mkdir( $path ) or die "I tried to create the path $path:\n$!";
-}
-
 
 
 $analyzer->changeReadGroup( $barcodes, $source, $target );
 
-print "Finished\n";
+print STDERR "Finished\n";
