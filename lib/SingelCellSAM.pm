@@ -236,13 +236,18 @@ sub changeReadGroup
     my ($bc, $nUMI, $line, $RGmissing, @lines );
     $RGmissing = 1;
     open (my $bar , "<$barcodes") or die $!;
+    open (my $out , ">$barcodes.passing") or die $!;
     while( my $bc  = <$bar> ){
         chomp($bc);
         ( $bc, $nUMI ) = split("\t", $bc);
         if ( defined $nUMI ){
-           $bcs->{$bc} =1 if ( $nUMI > $minNumi);
+            if ( $nUMI > $minNumi){
+                $bcs->{$bc} =1;
+                print $out $bc."\n";
+            }
         }else{
-           $bcs->{$bc} =1 
+           $bcs->{$bc} =1;
+           print $out $bc."\n";
         }
         
     }
@@ -261,7 +266,7 @@ sub changeReadGroup
             next;
         }
 
-        print $line if (defined $line );
+        print $line if ( $line );
     }
 
     return $self;
