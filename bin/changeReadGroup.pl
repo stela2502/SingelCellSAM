@@ -20,7 +20,7 @@ The modified sam reads are written to STDOUT.
 
 ";
 
-print ("second argument \$path was '$path'");
+print ("second argument \$target was '$target'");
 
 my $analyzer = SingelCellSAM->new();
 
