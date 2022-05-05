@@ -113,7 +113,8 @@ sub annotate10xcells
         my $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
         $I1entry = $I1entry -> fromFile ( $I1read, $acc );
         return ( $fastqEntry, $I1entry);
-    } 
+    }
+    my $fh = $self->{'out'};
     while ( my $line = <$IN> ) {
 
         #print STDERR $line;
@@ -123,7 +124,7 @@ sub annotate10xcells
 
 
         last  if ( not defined $bamEntry);
-        my $fh;
+        
         if ( not $bamEntry->isa('SingelCellSAM::BAMfile::BamEntry') ){
             ## this has been a comment!
             $fh = $self->{'out'};
@@ -134,7 +135,7 @@ sub annotate10xcells
         }
 
         $i++;
-
+        undef $fh;
         #print STDERR "The line we are on: $i\n";
 
         if ( not defined $fastqEntry){
