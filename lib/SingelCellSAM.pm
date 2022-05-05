@@ -127,6 +127,7 @@ sub annotate10xcells
             ## this has been a comment!
             $fh = $self->{'out'};
             print $fh $bamEntry;
+            $fh->flush();
             next;
         }
 
