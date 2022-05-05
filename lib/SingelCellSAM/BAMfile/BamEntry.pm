@@ -117,15 +117,14 @@ sub fromLine{
 
 
 sub print {
-  my ( $self, $fh ) = @_;
+  my ( $self) = @_;
 
   #print "I got the fh $fh.\n";
-  $fh ||= *STDOUT;
   #print "And now I have the fh $fh\n";
 
   #die join("\t", @{$self->{'data'}}). "\n" ;
 
-  print $fh join("\t", @{$self->{'data'}}). "\n" ;
+  print join("\t", @{$self->{'data'}}). "\n" ;
 
   return $self;
 }

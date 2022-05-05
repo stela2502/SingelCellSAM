@@ -114,8 +114,7 @@ sub annotate10xcells
         $I1entry = $I1entry -> fromFile ( $I1read, $acc );
         return ( $fastqEntry, $I1entry);
     }
-    my $fh = $self->{'out'};
-    while ( my $line = <$IN> ) {
+    LOOP: while ( my $line = <$IN> ) {
 
         #print STDERR $line;
 
@@ -127,15 +126,13 @@ sub annotate10xcells
         
         if ( not $bamEntry->isa('SingelCellSAM::BAMfile::BamEntry') ){
             ## this has been a comment!
-            $fh = $self->{'out'};
             if ( not $dataArea ){
-                print $fh $bamEntry;
+                print $bamEntry;
             }
-            next;
+            next LOOP;
         }
 
         $i++;
-        undef $fh;
         #print STDERR "The line we are on: $i\n";
 
         if ( not defined $fastqEntry){
@@ -176,7 +173,7 @@ sub annotate10xcells
         $bamEntry ->Add ( join( ":", "BC","Z",  $I1entry->sequence()  ) );
         $bamEntry ->Add ( join( ":", "QT","Z",  $I1entry->quality()   ) );
 
-        $bamEntry -> print( $self->{'out'} );
+        $bamEntry -> print( );
 
         $dataArea = 1;
         # for the atac sequences the reverse R2 is the sample tag "CR:Z:" rev(R2)[0..15]
