@@ -106,10 +106,11 @@ sub annotate10xcells
     $bcs = {};
 
     sub readSeqs {
+        my $acc = shift;
         my $fastqEntry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-        $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ );
+        $fastqEntry = $fastqEntry ->fromFile ( $annotationReadFQ, $acc );
         my $I1entry = SingelCellSAM::FastqFile::FastqEntry ->new ();
-        $I1entry = $I1entry -> fromFile ( $I1read );
+        $I1entry = $I1entry -> fromFile ( $I1read, $acc );
         return ( $fastqEntry, $I1entry);
     } 
     while ( my $line = <$IN> ) {
@@ -139,7 +140,7 @@ sub annotate10xcells
         } 
         elsif ( not $fastqEntry->name()  eq  $bamEntry->name() ){
             #if the sequence is paired we get two bam entries per read pair.
-            ( $fastqEntry, $I1entry ) = readSeqs();
+            ( $fastqEntry, $I1entry ) = readSeqs($bamEntry->name());
             $fastqReads++;
         }
         

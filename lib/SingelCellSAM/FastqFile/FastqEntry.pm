@@ -81,7 +81,26 @@ sub new {
 =cut
 
 sub fromFile{
-	my ( $self, $fh ) = @_;
+	my ( $self, $fh, $acc ) = @_;
+
+	if ( $acc ) {
+		while ( $fh and my $line = <$fh>) {
+			my $id = $line;
+			chomp($id);
+			$id =~ s/^.//s;
+			$id =~ s/ .*$//s;
+			unless ( $id eq $acc ) {
+				#print STDERR "I could not find '$acc' - '$id'\n";
+				foreach ( 1..3 ) {
+					$line = <$fh>;
+				}
+			}
+			else {
+				$self-> Add( $line );
+				last;
+			}
+		}
+	}
 	while ( not $self->is_filled() ){
 		if ( $fh and my $line = <$fh>) {
 			$self-> Add( $line );
