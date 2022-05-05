@@ -94,7 +94,7 @@ sub fromLine{
   my ( $self, $line ) = @_;
   
   if ( $line =~ m/^@/ ){
-    print $line;
+    #print $line;
     return $line;
   }
   chomp($line);
