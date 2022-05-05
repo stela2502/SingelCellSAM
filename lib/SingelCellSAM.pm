@@ -104,6 +104,7 @@ sub annotate10xcells
     my $i = 0;
     my $fastqReads = 0;
     $bcs = {};
+    my $dataArea = 0;
 
     sub readSeqs {
         my $acc = shift;
@@ -126,8 +127,9 @@ sub annotate10xcells
         if ( not $bamEntry->isa('SingelCellSAM::BAMfile::BamEntry') ){
             ## this has been a comment!
             $fh = $self->{'out'};
-            print $fh $bamEntry;
-            $fh->flush();
+            if ( not $dataArea ){
+                print $fh $bamEntry;
+            }
             next;
         }
 
@@ -174,6 +176,8 @@ sub annotate10xcells
         $bamEntry ->Add ( join( ":", "QT","Z",  $I1entry->quality()   ) );
 
         $bamEntry -> print( $self->{'out'} );
+
+        $dataArea = 1;
         # for the atac sequences the reverse R2 is the sample tag "CR:Z:" rev(R2)[0..15]
         # the CB:Z: tag looks like black magic to me. I can not determine how that one is created.
 
